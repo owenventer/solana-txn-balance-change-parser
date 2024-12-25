@@ -125,6 +125,7 @@ function parseInstructionTransfers(ix, includeSolTransfers = true) {
  * Fetch info for multiple token accounts via getMultipleAccountsInfo.
  * We parse the data if it's a valid SPL token account (owner == TOKEN_PROGRAM_ID, length >= 64).
  * Then we store { owner, mint, decimals? } in an in-memory cache.
+ *
  */
 async function fetchMultipleTokenAccountInfos(
   conn,
@@ -134,8 +135,16 @@ async function fetchMultipleTokenAccountInfos(
   // Convert strings to PublicKey
   const pubkeys = tokenAccounts.map((a) => new PublicKey(a));
 
+  // Start timer for getMultipleAccountsInfo
+  const startGetMultipleAccountsInfo = Date.now();
   // Single RPC call
   const accountInfos = await conn.getMultipleAccountsInfo(pubkeys);
+  const endGetMultipleAccountsInfo = Date.now();
+  console.log(
+    `getMultipleAccountsInfo took ${
+      endGetMultipleAccountsInfo - startGetMultipleAccountsInfo
+    } ms`
+  );
 
   // Parse each returned info
   for (let i = 0; i < accountInfos.length; i++) {
@@ -170,13 +179,21 @@ export async function parseTransfersFromSignature(
   signature,
   includeSolTransfers = true
 ) {
-  const HELIUS_API_KEY = "API-KEY"; // Replace with API key
+  const HELIUS_API_KEY = ""; // Replace with your Helius API key
   const BASE_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
   const conn = new Connection(BASE_URL, "confirmed");
 
+  // Start timer for getParsedTransaction
+  const startGetParsedTransaction = Date.now();
   const parsedTx = await conn.getParsedTransaction(signature, {
     maxSupportedTransactionVersion: 0,
   });
+  const endGetParsedTransaction = Date.now();
+  console.log(
+    `getParsedTransaction took ${
+      endGetParsedTransaction - startGetParsedTransaction
+    } ms`
+  );
 
   if (!parsedTx || !parsedTx.meta) return [];
 
@@ -308,8 +325,7 @@ export async function parseTransfersFromSignature(
 }
 
 (async () => {
-  const sig =
-    "TRANSACTION_SIGNATURE";
+  const sig = "";
 
   const startTime = Date.now();
   const results = await parseTransfersFromSignature(sig);
